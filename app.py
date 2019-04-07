@@ -1,4 +1,5 @@
 from random import shuffle
+from os import system, name
 
 
 class BlackJack:
@@ -54,24 +55,28 @@ class BlackJack:
         counter = 0
         shuffled_deck = self.build_deck()
         bet = 0
+        kill = True
 
         # Set bet value
-        while True:
+        while True and kill:
             try:
                 if self.bank > 0:
                     if bet <= 0:
                         bet = float(input('How much would you like to bet? '))
 
+                        # if bet exceeds the balance, ask to change bet value
                         while True:
                             if bet > self.bank:
                                 bet = float(input(f'Please enter a lower value! Your bet value exceeds your balance of {self.bank}\n\nHow much would you like to bet? '))
                                 continue
                             else:
                                 break
+
                         continue
                     else:
                         break
                 else:
+                    # Add more if balance is spent
                     print(f"{self.name} you are out of funds, please add more to continue playing")
                     self.bank = int(input(f"{self.name} how much funds would you like to add? "))
 
@@ -79,14 +84,14 @@ class BlackJack:
                         continue
                     else:
                         print('Game has just been killed, restart script if you want another game')
-                        # TODO: Find a way to kill the whole script
-                        del self
+                        kill = False
+
             except ValueError:
                 print("Invalid Input:  please only enter bet value as a number")
                 continue
 
         # Start the initial deal
-        while self.initial_deal:
+        while self.initial_deal and kill:
             counter += 1
             if deal_sqe == 2:
                 self.player.append(shuffled_deck.pop(0))
@@ -104,10 +109,11 @@ class BlackJack:
                 self.initial_deal = False
 
         # Print initial hand to console
-        self.print_cards((self.player, self.dealer))
+        if kill:
+            self.print_cards((self.player, self.dealer))
 
         # Start second phase of dealing
-        if not self.initial_deal:
+        if not self.initial_deal and len(self.player) and kill:
             hit_or_stick = ''
             while True:
 
@@ -195,6 +201,8 @@ class BlackJack:
         show_hand = ''
         player, dealer = hands
 
+        self.clear()
+
         show_hand += "\n\n{}'s hand: ".format(self.name)
         for p_card in player:
             show_hand += "{} {}\t".format(p_card[1], p_card[0])
@@ -237,13 +245,9 @@ class BlackJack:
 
             gather_total += val[2]
 
-            if gather_total > 21 and aces > 0:
-                while True:
-                    if gather_total > 21 and aces > 0:
-                        gather_total -= 10
-                        aces -= 1
-                    else:
-                        break
+        while gather_total > 21 and aces:
+                gather_total -= 10
+                aces -= 1
 
         return gather_total
 
@@ -271,20 +275,28 @@ class BlackJack:
             is_replay = input(f"{self.name} would you like another game? (YES or NO)").upper()
 
             if is_replay == 'YES':
-                self.player = []
-                self.dealer = []
-                self.initial_deal = True
+                self.reset()
                 self.play_game()
                 break
             elif is_replay == 'NO':
-                self.player = []
-                self.dealer = []
-                self.initial_deal = True
+                self.reset()
                 print(f"Hey {self.name} hope you had fun and look forward to seeing you play again")
                 break
             else:
                 print('Invalid input, please answer correctly: ')
                 continue
+
+    def reset(self):
+        self.player = []
+        self.dealer = []
+        self.initial_deal = True
+
+    @staticmethod
+    def clear():
+        if name == 'posix':
+            _ = system('clear')
+        else:
+            _ = system('cls')
 
 
 newGame = BlackJack('Chris', 500)
